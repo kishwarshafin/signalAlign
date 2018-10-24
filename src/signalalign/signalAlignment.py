@@ -13,7 +13,7 @@ from random import shuffle
 
 import signalalign.utils.multithread as multithread
 from signalalign import defaultModelFromVersion, parseFofn
-from signalalign.nanoporeRead import NanoporeRead, NanoporeRead2D
+from signalalign.nanoporeRead import NanoporeRead
 from signalalign.event_detection import add_raw_start_and_raw_length_to_events
 from signalalign.utils.bwaWrapper import *
 from signalalign.utils.fileHandlers import FolderHandler
@@ -27,7 +27,7 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
                                 stateMachineType="threeState", in_templateHmm=None,
                                 in_complementHmm=None, in_templateHdp=None, in_complementHdp=None, threshold=0.01,
                                 diagonal_expansion=None,
-                                constraint_trim=None, target_regions=None, degenerate=None, twoD_chemistry=False,
+                                constraint_trim=None, target_regions=None, degenerate=None,
                                 alignment_file=None, bwa_reference=None,
                                 track_memory_usage=False, get_expectations=False, output_format='full', embed=False,
                                 event_table=False,
@@ -48,7 +48,6 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
         "constraint_trim": constraint_trim,
         "target_regions": target_regions,
         "degenerate": degenerate,
-        "twoD_chemistry": twoD_chemistry,
         "alignment_file": alignment_file,
         "bwa_reference": bwa_reference,
         'track_memory_usage': track_memory_usage,
@@ -82,7 +81,6 @@ class SignalAlignment(object):
                  alignment_file=None,
                  bwa_reference=None,
                  # reasonable defaults
-                 twoD_chemistry=False,
                  target_regions=None,
                  output_format="full",
                  embed=False,
@@ -104,7 +102,6 @@ class SignalAlignment(object):
         self.constraint_trim = constraint_trim  # alignment algorithm param
         self.output_format = output_format  # smaller output files
         self.degenerate = degenerate  # set of nucleotides for degenerate characters
-        self.twoD_chemistry = twoD_chemistry  # flag for 2D sequencing runs
         self.temp_folder = FolderHandler()  # object for holding temporary files (non-toil)
         self.read_name = self.in_fast5.split("/")[-1][:-6]  # get the name without the '.fast5'
         self.target_regions = target_regions
@@ -152,8 +149,6 @@ class SignalAlignment(object):
         print("[SignalAlignment.run] INFO: Starting on {read}".format(read=self.in_fast5))
         if self.get_expectations:
             assert self.in_templateHmm is not None, "Need template HMM files for model training"
-            if self.twoD_chemistry:
-                assert self.in_complementHmm is not None, "Need complement HMM files for model training"
         if not os.path.isfile(self.in_fast5):
             print("[SignalAlignment.run] ERROR: Did not find fast5 at {file}".format(file=self.in_fast5),
                   file=sys.stderr)
@@ -162,15 +157,10 @@ class SignalAlignment(object):
 
         # prep
         self.openTempFolder("tempFiles_%s" % self.read_name)
-        if self.twoD_chemistry:
-            npRead = NanoporeRead2D(fast_five_file=self.in_fast5, event_table=self.event_table, initialize=True,
-                                    path_to_bin=self.path_to_bin, enforce_supported_versions=self.enforce_supported_versions,
-                                    perform_kmer_event_alignment=self.perform_kmer_event_alignment)
-        else:
-            npRead = NanoporeRead(fast_five_file=self.in_fast5, event_table=self.event_table, initialize=True,
-                                  path_to_bin=self.path_to_bin, alignment_file=self.alignment_file,
-                                  model_file_location=self.in_templateHmm, enforce_supported_versions=self.enforce_supported_versions,
-                                  perform_kmer_event_alignment=self.perform_kmer_event_alignment)
+        npRead = NanoporeRead(fast_five_file=self.in_fast5, event_table=self.event_table, initialize=True,
+                              path_to_bin=self.path_to_bin, alignment_file=self.alignment_file,
+                              model_file_location=self.in_templateHmm, enforce_supported_versions=self.enforce_supported_versions,
+                              perform_kmer_event_alignment=self.perform_kmer_event_alignment)
         # sanity check
         if not npRead.initialize_success:
             self.failStop("[SignalAlignment.run] ERROR: NanoporeRead failed initialization: {}".format(self.in_fast5),
@@ -182,19 +172,7 @@ class SignalAlignment(object):
             self.in_templateHmm = defaultModelFromVersion(strand="template", version=npRead.version)
             print("[SignalAlignment.run] Inferred template HMM {} from np read version {}".format(
                 self.in_templateHmm, npRead.version))
-
-        if self.twoD_chemistry and self.in_complementHmm is None:
-            pop1_complement = npRead.complement_model_id == "complement_median68pA_pop1.model"
-            self.in_complementHmm = defaultModelFromVersion(strand="complement", version=npRead.version,
-                                                            pop1_complement=pop1_complement)
-            print("[SignalAlignment.run] Inferred complement HMM {} from np read version {}".format(
-                self.in_complementHmm, npRead.version))
         assert self.in_templateHmm is not None
-        if self.twoD_chemistry:
-            if self.in_complementHmm is None:
-                self.failStop("[SignalAlignment.run] ERROR Need to have complement HMM for 2D analysis", npRead)
-                return False
-
 
         # read label
         read_label = npRead.read_label  # use this to identify the read throughout
@@ -270,10 +248,7 @@ class SignalAlignment(object):
         elif self.stateMachineType == "threeStateHdp":
             model_label = ".sm3Hdp"
             stateMachineType_flag = "--sm3Hdp "
-            if self.twoD_chemistry:
-                assert (self.in_templateHdp is not None) and (self.in_complementHdp is not None), "Need to provide HDPs"
-            else:
-                assert self.in_templateHdp is not None, "Need to provide Template HDP"
+            assert self.in_templateHdp is not None, "Need to provide Template HDP"
         else:  # make invalid stateMachine control?
             model_label = ".sm"
             stateMachineType_flag = ""
@@ -306,10 +281,6 @@ class SignalAlignment(object):
             os.remove(posteriors_file_path)
         # flags
         template_model_flag = "-T {} ".format(self.in_templateHmm)
-        if self.twoD_chemistry:
-            complement_model_flag = "-C {} ".format(self.in_complementHmm)
-        else:
-            complement_model_flag = ""
 
         print("[SignalAlignment.run] NOTICE: template model {t} complement model {c}"
               "".format(t=self.in_templateHmm, c=self.in_complementHmm))
@@ -326,8 +297,6 @@ class SignalAlignment(object):
         # input HDPs
         if (self.in_templateHdp is not None) or (self.in_complementHdp is not None):
             hdp_flags = "-v {tHdp_loc} ".format(tHdp_loc=self.in_templateHdp)
-            if self.twoD_chemistry and self.in_complementHdp is not None:
-                hdp_flags += "-w {cHdp_loc} ".format(cHdp_loc=self.in_complementHdp)
         else:
             hdp_flags = ""
 
@@ -361,38 +330,30 @@ class SignalAlignment(object):
         else:
             degenerate_flag = ""
 
-        # twoD flag
-        if self.twoD_chemistry:
-            twoD_flag = "--twoD"
-        else:
-            twoD_flag = ""
-
         # commands
         if self.get_expectations:
             template_expectations_file_path = os.path.join(self.destination, read_label + ".template.expectations.tsv")
             complement_expectations_file_path = os.path.join(self.destination,
                                                              read_label + ".complement.expectations.tsv")
             command = \
-                "{vA} {td} {degen}{sparse}{model} -q {npRead} " \
-                "{t_model}{c_model}{thresh}{expansion}{trim} {hdp}-L {readLabel} -p {cigarFile} " \
+                "{vA} {degen}{sparse}{model} -q {npRead} " \
+                "{t_model}{thresh}{expansion}{trim} {hdp}-L {readLabel} -p {cigarFile} " \
                 "-t {templateExpectations} -c {complementExpectations} -n {seq_name} {f_ref_fa} {b_ref_fa}" \
                     .format(vA=self.path_to_signalMachine, model=stateMachineType_flag,
-                            cigarFile=cigar_file_,
-                            npRead=npRead_, readLabel=read_label, td=twoD_flag,
+                            cigarFile=cigar_file_, npRead=npRead_, readLabel=read_label,
                             templateExpectations=template_expectations_file_path, hdp=hdp_flags,
                             complementExpectations=complement_expectations_file_path, t_model=template_model_flag,
-                            c_model=complement_model_flag, thresh=threshold_flag, expansion=diag_expansion_flag,
+                            thresh=threshold_flag, expansion=diag_expansion_flag,
                             trim=trim_flag, degen=degenerate_flag, sparse=out_fmt, seq_name=reference_name,
                             f_ref_fa=forward_ref_flag, b_ref_fa=backward_ref_flag)
         else:
             command = \
-                "{vA} {td} {degen}{sparse}{model} -q {npRead} " \
-                "{t_model}{c_model}{thresh}{expansion}{trim} -p {cigarFile} " \
+                "{vA} {degen}{sparse}{model} -q {npRead} " \
+                "{t_model}{thresh}{expansion}{trim} -p {cigarFile} " \
                 "-u {posteriors} {hdp}-L {readLabel} -n {seq_name} {f_ref_fa} {b_ref_fa}" \
                     .format(vA=self.path_to_signalMachine, model=stateMachineType_flag, sparse=out_fmt,
                             cigarFile=cigar_file_,
-                            readLabel=read_label, npRead=npRead_, td=twoD_flag,
-                            t_model=template_model_flag, c_model=complement_model_flag,
+                            readLabel=read_label, npRead=npRead_, t_model=template_model_flag,
                             posteriors=posteriors_file_path, thresh=threshold_flag, expansion=diag_expansion_flag,
                             trim=trim_flag, hdp=hdp_flags, degen=degenerate_flag, seq_name=reference_name,
                             f_ref_fa=forward_ref_flag, b_ref_fa=backward_ref_flag)
@@ -472,14 +433,7 @@ class SignalAlignment(object):
         try:
             with open(file_path, "w") as read_file:
                 # get appropriate read
-                if self.twoD_chemistry:
-                    # check for table to make 'assembled' 2D alignment table fasta with
-                    if not nanopore_read.has2D_alignment_table:
-                        nanopore_read.close()
-                        return False
-                    nucleotide_read = nanopore_read.alignment_table_sequence
-                else:
-                    nucleotide_read = nanopore_read.template_read
+                nucleotide_read = nanopore_read.template_read
 
                 # write read
                 fastaWrite(fileHandleOrFile=read_file,
@@ -771,27 +725,6 @@ class SignalAlignSample(object):
                                                                            positions_file=self.positions_file)
 
 
-# TODO use Fast5 object
-def get_2d_length(fast5, verbose=False):
-    """Get 2d Read length. Searches only in one location
-
-   :param fast5: path to fast5 file
-   :param verbose: bool option to print update info
-    """
-    read = h5py.File(fast5, 'r')
-    twoD_read_sequence_address = "/Analyses/Basecall_2D_000/BaseCalled_2D/Fastq"
-    if not (twoD_read_sequence_address in read):
-        if verbose:
-            print("This read didn't have a 2D read", fast5, end='\n', file=sys.stderr)
-        read.close()
-        return 0
-    else:
-        read_length = len(read[twoD_read_sequence_address][()].split()[2])
-        if verbose:
-            print("read %s has %s bases" % (fast5, read_length))
-        read.close()
-        return read_length
-
 
 # TODO use Fast5 object
 def get_1d_length(fast5, verbose=False):
@@ -825,12 +758,11 @@ def trim_num_files_in_sample(sample, max_bases, twoD, verbose=True):
     shuffle(sample.getFiles())
     total_amount = 0
     file_count = 0
-    get_seq_len_fcn = get_2d_length if twoD else get_1d_length
     # loop over files and add them to training list, break when we have enough bases to complete a batch
     # collect paths to fast5 files
     list_of_fast5s = []
     for f in sample.getFiles():
-        total_amount += get_seq_len_fcn(f)
+        total_amount += get_1d_length(f)
         if total_amount >= max_bases:
             if len(list_of_fast5s) == 0:
                 total_amount = 0

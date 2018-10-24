@@ -70,7 +70,6 @@ def parse_args():
                         required=True, type=str, default=None,
                         help="directory to put the alignments")
     # optional arguments
-    parser.add_argument("--2d", action='store_true', dest="twoD", default=False, help="flag, specify if using 2D reads")
     parser.add_argument('--in_template_hmm', '-T', action='store', dest='in_T_Hmm',
                         required=False, type=str, default=None,
                         help="input HMM for template events, if you don't want the default")
@@ -224,7 +223,6 @@ def main(args):
         "diagonal_expansion": args.diag_expansion,
         "constraint_trim": args.constraint_trim,
         "degenerate": getDegenerateEnum(args.degenerate),
-        "twoD_chemistry": args.twoD,
         "target_regions": args.target_regions,
         "embed": args.embed,
         "event_table": args.event_table,
