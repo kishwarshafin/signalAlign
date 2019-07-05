@@ -442,7 +442,7 @@ static void test_adjustForDrift(CuTest *testCase) {
 
 static void test_sm3_diagonalDPCalculations(CuTest *testCase) {
     // make some DNA sequences and fake nanopore read data
-    char *sX = "ACGATAXGGACAT";
+    char *sX = "ACGATALGGACAT";
     double sY[28] = {
             58.743435, 0.887833, 0.0571, 0.0, //ACGATA 0
             53.604965, 0.816836, 0.0571, 0.1,//CGATAC 1
@@ -953,7 +953,7 @@ static void test_DegenerateNucleotides(CuTest *testCase) {
 
 
     sequence_destruct(degenerateSequence);
-    degenerateSequence = replaceBasesInSequence(refSeq, "C", "X");
+    degenerateSequence = replaceBasesInSequence(refSeq, "C", "L");
     stList *alignedPairs_degenerate = getAlignedPairsUsingAnchors(sM, degenerateSequence,
                                                                   eventSequence, filteredRemappedAnchors, p,
                                                                   diagonalCalculationPosteriorMatchProbs,
@@ -961,7 +961,7 @@ static void test_DegenerateNucleotides(CuTest *testCase) {
     checkAlignedPairsWithOverlap(testCase, alignedPairs_degenerate,
                                  degenerateSequence->length, npRead->nbTemplateEvents);
     //st_uglyf("got %lld degenerate alignedPairs with anchors\n", stList_length(alignedPairs_degenerate));
-    CuAssertTrue(testCase, stList_length(alignedPairs_degenerate) == 7349);
+    CuAssertIntEquals(testCase, 7349, stList_length(alignedPairs_degenerate));
 
     // clean
     pairwiseAlignmentBandingParameters_destruct(p);

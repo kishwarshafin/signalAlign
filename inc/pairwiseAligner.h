@@ -66,9 +66,17 @@ struct _sequence {
     void *elements;
     char *degenerateBases;
     int64_t nbDegenerateBases;
+    stHash* ambigBases;
     void *(*get)(void *elements, int64_t index);
     Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t);
 };
+
+
+void path_permutePattern(stList *listOfPositions, int64_t currentLength, int64_t nbPositions, char *arr,
+                                int64_t nbOptions, char *baseOptions);
+
+//char* get_ambig_chars(char* ambig_char);
+stHash *create_ambig_bases();
 
 char *sequence_prepareAlphabet(const char *alphabet, int64_t alphabet_size);
 
@@ -278,6 +286,8 @@ typedef struct _hdcell {
 
 HDCell *hdCell_construct(void *nucleotideSequence, int64_t stateNumber, int64_t nbBaseOptions, char *baseOptions,
                          int64_t kmerLength);
+
+HDCell *hdCell_construct2(void *nucleotideSequence, int64_t stateNumber, stHash* ambigBases, int64_t kmerLength);
 
 double hdCell_totalProbability(HDCell *cell1, HDCell *cell2);
 

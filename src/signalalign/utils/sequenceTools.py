@@ -22,6 +22,53 @@ from signalalign.utils.parsers import read_fasta
 from py3helpers.utils import find_substring_indices, all_string_permutations
 
 
+AMBIG_BASES = {
+    "AG": "R",
+    "CT": "Y",
+    "CG": "S",
+    "AT": "W",
+    "GT": "K",
+    "AC": "M",
+    "CGT": "B",
+    "AGT": "D",
+    "ACT": "H",
+    "ACG": "V",
+    "ACGT": "X",
+    "CEO": "L",
+    "CE": "P",
+    "AI": "Q",
+    "AF": "f",
+    "ACEGOT": "U",
+    "JT": "Z",
+    "A": "A",
+    "T": "T",
+    "C": "C",
+    "G": "G",
+    "E": "E",
+    "O": "O",
+    "F": "F",
+    "J": "J",
+    "I": "I",
+    "R": "R",
+    "Y": "Y",
+    "S": "S",
+    "W": "W",
+    "K": "K",
+    "M": "M",
+    "B": "B",
+    "D": "D",
+    "H": "H",
+    "V": "V",
+    "X": "X",
+    "L": "L",
+    "P": "P",
+    "Q": "Q",
+    "f": "f",
+    "U": "U",
+    "Z": "Z"
+}
+
+
 def find_gatc_motifs(sequence):
     """Generate index of 'A' within the 'GATC' motifs in a nucleotide sequence
 
@@ -541,7 +588,7 @@ class CustomAmbiguityPositions(object):
                 raise RuntimeError(
                     "[CustomAmbiguityPositions._get_substituted_sequence]Illegal substitution requesting "
                     "change from %s to %s, row: %s" % (raw_sequence[row["position"]], row["change_to"], row))
-            raw_sequence[row["position"]] = row["change_to"]
+            raw_sequence[row["position"]] = AMBIG_BASES["".join(sorted(row["change_to"]))]
         return "".join(raw_sequence)
 
     def _get_contig_positions(self, contig, strand):

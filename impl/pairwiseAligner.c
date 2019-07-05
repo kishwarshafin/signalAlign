@@ -20,6 +20,7 @@
 #include "pairwiseAlignment.h"
 #include "pairwiseAligner.h"
 #include "continuousHmm.h"
+#include "nanopore_hdp.h"
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,7 +29,38 @@
 // Test: Pass
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+stHash *create_ambig_bases() {
+  stHash *ambig_hash = stHash_construct3(stHash_stringKey, stHash_stringEqualKey,
+                                                              NULL, NULL);
+//  char* ambig_1 = "X";
+//capital Letters not taken
+// N,
+
+  stHash_insert(ambig_hash, "R", "AG");
+  stHash_insert(ambig_hash, "Y", "CT");
+  stHash_insert(ambig_hash, "S", "CG");
+  stHash_insert(ambig_hash, "W", "AT");
+  stHash_insert(ambig_hash, "K", "GT");
+  stHash_insert(ambig_hash, "M", "AC");
+  stHash_insert(ambig_hash, "B", "CGT");
+  stHash_insert(ambig_hash, "D", "AGT");
+  stHash_insert(ambig_hash, "H", "ACT");
+  stHash_insert(ambig_hash, "V", "ACG");
+  stHash_insert(ambig_hash, "X", "ACGT");
+
+  stHash_insert(ambig_hash, "L", "CEO");
+  stHash_insert(ambig_hash, "P", "CE");
+  stHash_insert(ambig_hash, "Q", "AI");
+  stHash_insert(ambig_hash, "f", "AF");
+  stHash_insert(ambig_hash, "U", "ACEGOT");
+  stHash_insert(ambig_hash, "Z", "JT");
+
+
+  return ambig_hash;
+}
+
 const char *PAIRWISE_ALIGNMENT_EXCEPTION_ID = "PAIRWISE_ALIGNMENT_EXCEPTION";
+
 
 // test: pass
 Diagonal diagonal_construct(int64_t xay, int64_t xmyL, int64_t xmyR) {
@@ -338,6 +370,7 @@ Sequence *sequence_construct(int64_t length, void *elements, void *(*getFcn)(voi
     self->get = getFcn;
     self->degenerateBases = NULL;
     self->nbDegenerateBases = 0;
+    self->ambigBases = create_ambig_bases();
     return self;
 }
 
@@ -429,6 +462,7 @@ Sequence *sequence_constructEventSequence(int64_t length, void *events) {
 }
 
 void sequence_destruct(Sequence *seq) {
+//    stHash_destruct(seq->ambigBases);
     free(seq);
 }
 
@@ -544,6 +578,8 @@ stList *path_findDegeneratePositions(char *kmer, int64_t kmerLength) {
     return methyls;
 }
 
+
+
 static bool path_checkKmerLegalTransition(char *kmerOne, char *kmerTwo, int64_t kmerLength) {
     // checks for xATAGA
     //             ATAGAy
@@ -574,7 +610,7 @@ bool path_checkLegal(Path *path1, Path *path2) {
 
 // adapted from SO:
 // http://stackoverflow.com/questions/17506848/print-all-possible-strings-of-length-p-that-can-be-formed-from-the-given-set
-static void path_permutePattern(stList *listOfPositions, int64_t currentLength, int64_t nbPositions, char *arr,
+void path_permutePattern(stList *listOfPositions, int64_t currentLength, int64_t nbPositions, char *arr,
                                 int64_t nbOptions, char *baseOptions) {
     if (currentLength == nbPositions) {
         arr[nbPositions] = '\0';
@@ -654,8 +690,10 @@ HDCell *hdCell_construct(void *nucleotideSequence, int64_t stateNumber, int64_t 
         stList *patterns = path_listPotentialKmers(nbDegeneratePositions, nbBaseOptions, baseOptions);
         for (int64_t i = 0; i < cell->numberOfPaths; i++) {
             char *pattern = stList_get(patterns, i);
-            Path *path = path_construct(hdCell_getSubstitutedKmer(degeneratePositions, nbDegeneratePositions, pattern,
-                                                                  kmer_i), stateNumber, kmerLength);
+            char* kmer = hdCell_getSubstitutedKmer(degeneratePositions, nbDegeneratePositions, pattern,
+                                                   kmer_i);
+//            fprintf(stderr, "construct 1: %s\t%s\n", pattern, kmer);
+            Path *path = path_construct(kmer, stateNumber, kmerLength);
             cell->paths[i] = path;
         }
     } else {
@@ -668,6 +706,86 @@ HDCell *hdCell_construct(void *nucleotideSequence, int64_t stateNumber, int64_t 
     stList_destruct(degeneratePositions);
 
     return cell;
+}
+
+HDCell *hdCell_construct2(void *nucleotideSequence, int64_t stateNumber, stHash* ambigBases,
+                         int64_t kmerLength) {
+  char *kmer_i;
+  if (nucleotideSequence != NULL) {
+    kmer_i = (char *)st_malloc((kmerLength+1) * sizeof(char));
+    for (int64_t x = 0; x < kmerLength; x++) {
+      kmer_i[x] = *((char *)nucleotideSequence + x);
+    }
+    kmer_i[kmerLength] = '\0';
+  } else {
+    kmer_i = NULL;
+  }
+
+  HDCell *cell = st_malloc(sizeof(HDCell));
+  stList *methyls = stList_construct();
+
+//  char base_kmer[kmerLength+1];
+//  strcpy (base_kmer, kmer_i);
+  char *base_kmer = stString_copy(kmer_i);
+  stList_append(methyls, base_kmer);
+
+//  search for ambiguous characters and if they are found update the kmers
+  if (kmer_i != NULL) {
+//  char *base_kmer = stString_copy(kmer_i);
+
+
+    for (int64_t i = 0; i < kmerLength; i++) {
+      char n[2];
+      n[0] = base_kmer[i];
+      n[1] = '\0';
+//      look for base in ambiguous bases
+//      char* replace_bases = stHash_search(ambigBases, &n);
+      char* replace_bases = stHash_search(ambigBases, &n);
+//      char* test = stHash_search(ambigBases, &"X");
+//      fprintf(stderr, "test %s", test);
+//      fprintf(stderr, "replace_bases %s", replace_bases);
+
+      if (replace_bases != NULL){
+//        create new container for methylated bases
+        stList *tmp_methyls = stList_construct();
+        int64_t number_of_kmers = stList_length(methyls);
+//        if base is found create all kmers for that kmer with replacement bases
+        for (int j=0; j < number_of_kmers; j++){
+          char* kmer = stList_get(methyls, j);
+          int num_replace_bases = strlen(replace_bases);
+//          edit the kmer as many times as the number of replacement bases
+          for (int64_t k = 0; k < num_replace_bases; k++) {
+            kmer[i] = replace_bases[k];
+            char *new_kmer = stString_copy(kmer);
+            stList_append(tmp_methyls, new_kmer);
+          }
+        }
+        stList_destruct(methyls);
+        methyls = tmp_methyls;
+      }
+    }
+
+  }
+
+
+  cell->numberOfPaths = stList_length(methyls);
+  cell->paths = (Path **)st_malloc(sizeof(Path *) * cell->numberOfPaths);
+
+  for (int64_t i = 0; i < cell->numberOfPaths; i++) {
+    char *kmer = stList_get(methyls, i);
+    Path *path = path_construct(kmer, stateNumber, kmerLength);
+    cell->paths[i] = path;
+
+//    if (kmer_i != NULL) {
+//      int64_t a = kmer_to_word(kmer, "ACGJT", 5, 6);
+//    }
+//    fprintf(stderr, "construct 2: %s\n", kmer);
+  }
+  cell->init = TRUE;
+  free(kmer_i);
+  stList_destruct(methyls);
+
+  return cell;
 }
 
 Path *hdCell_getPath(HDCell *cell, int64_t pathNumber) {
@@ -890,9 +1008,11 @@ DpDiagonal *dpDiagonal_construct(Diagonal diagonal, int64_t stateNumber, int64_t
 
         void *k = sequence_getKmerWithBoundsCheck(nucleotideSequence, (x - 1));
 
-        HDCell *hdCell = hdCell_construct(k, stateNumber, nucleotideSequence->nbDegenerateBases,
-                                          nucleotideSequence->degenerateBases, kmerLength);
-
+//        HDCell *hdCell2 = hdCell_construct(k, stateNumber, nucleotideSequence->nbDegenerateBases,
+//                                          nucleotideSequence->degenerateBases, kmerLength);
+        HDCell *hdCell = hdCell_construct2(k, stateNumber, nucleotideSequence->ambigBases, kmerLength);
+//        assert(hdCell->numberOfPaths == hdCell2->numberOfPaths2);
+//        hdCell_destruct(hdCell2);
         dpDiagonal->totalPaths += hdCell->numberOfPaths;
         dpDiagonal_assignCell(dpDiagonal, hdCell, xmy);
 
