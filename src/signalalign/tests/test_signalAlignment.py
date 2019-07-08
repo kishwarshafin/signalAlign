@@ -67,7 +67,7 @@ class SignalAlignmentTest(unittest.TestCase):
     def test_create_signalAlignment_args(self):
         expected_args = {"backward_reference", "forward_reference", "destination", "stateMachineType", "in_templateHmm",
                          "in_complementHmm", "in_templateHdp", "in_complementHdp", "threshold", "diagonal_expansion",
-                         "constraint_trim", "target_regions", "degenerate", "twoD_chemistry", "alignment_file",
+                         "constraint_trim", "target_regions", "twoD_chemistry", "alignment_file",
                          "bwa_reference",
                          'track_memory_usage', 'get_expectations', 'output_format', 'embed', 'event_table',
                          'check_for_temp_file_existance', 'path_to_bin', 'perform_kmer_event_alignment', 'filter_reads',
@@ -79,7 +79,7 @@ class SignalAlignmentTest(unittest.TestCase):
         expected_args = {"fofns", "fast5_dirs", "positions_file", "motifs", "bwa_reference", "fw_reference",
                          "bw_reference", "name", "number_of_kmer_assignments", "probability_threshold",
                          "kmers_from_reference", 'alignment_file', "quality_threshold", "recursive",
-                         "workers", "assignments_dir", "readdb", "degenerate"}
+                         "workers", "assignments_dir", "readdb"}
         args = create_sa_sample_args()
         self.assertSetEqual(set(args.keys()), expected_args)
 
@@ -359,12 +359,11 @@ class SignalAlignmentTest(unittest.TestCase):
             # create samples
             samples = []
             options = create_sa_sample_args(fast5_dirs=[tempdir], name="some_name",
-                                            motifs=[["T", "X"]],
+                                            motifs=[["T", "Z"]],
                                             # motifs=[["GATAAT", "GAXAAT"], ["GATAAT", "GATAAX"]],
                                             bwa_reference=self.ecoli_reference,
                                             readdb=self.fast5_readdb,
-                                            alignment_file=self.fast5_bam,
-                                            degenerate="brdu")
+                                            alignment_file=self.fast5_bam)
             samples.append(SignalAlignSample(working_folder=working_folder, **options))
             # with captured_output() as (out, err):
             samples = multithread_signal_alignment_samples(samples, signal_align_arguments, 2)
@@ -390,7 +389,7 @@ class SignalAlignmentTest(unittest.TestCase):
                                                in_templateHmm=os.path.join(self.HOME, "models/fake_testModelR9p4_5mer_acfgt_RNA.model"),
                                                path_to_bin=self.path_to_bin, destination=working_folder.path,
                                                embed=False, output_format="full", filter_reads=0, twoD_chemistry=False,
-                                               delete_tmp=True, degenerate="m6a", check_for_temp_file_existance=False)
+                                               delete_tmp=True, check_for_temp_file_existance=False)
 
             multithread_signal_alignment(args, list_dir(new_dir, ext="fast5"), worker_count=8,
                                          forward_reference=None,

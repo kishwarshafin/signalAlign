@@ -77,9 +77,6 @@ def parse_args():
                              help="template serialized HDP file")
     run_parser2.add_argument('--complement_hdp', '-cH', action='store', dest='complementHDP', default=None,
                              help="complement serialized HDP file")
-    run_parser2.add_argument('--degenerate', '-x', action='store', dest='degenerate', default="variant",
-                             help="Specify degenerate nucleotide options: "
-                                  "variant -> {ACGT}, cytosine2 -> {CE} cytosine3 -> {CEO} adenosine -> {AI}")
     run_parser2.add_argument('--stateMachineType', '-smt', action='store', dest='stateMachineType', type=str,
                              default="threeState", help="decide which model to use, threeState by default")
     run_parser2.add_argument('--file_of_files', '-fofn', action='store', dest='fofn', required=False, type=str,
@@ -280,7 +277,6 @@ def main(args):
             "threshold": args.threshold,
             "diagonal_expansion": args.diag_expansion,
             "constraint_trim": args.constraint_trim,
-            "degenerate": getDegenerateEnum(args.degenerate),
             "twoD_chemistry": args.twoD,
             "target_regions": args.target_regions,
             "embed": args.embed,

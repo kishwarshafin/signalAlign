@@ -22,7 +22,7 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
                                 stateMachineType="threeState", in_templateHmm=None,
                                 in_complementHmm=None, in_templateHdp=None, in_complementHdp=None, threshold=0.01,
                                 diagonal_expansion=None,
-                                constraint_trim=None, target_regions=None, degenerate=None, twoD_chemistry=False,
+                                constraint_trim=None, target_regions=None, twoD_chemistry=False,
                                 alignment_file=None, bwa_reference=None,
                                 track_memory_usage=False, get_expectations=False, output_format='full', embed=False,
                                 event_table=False,
@@ -43,7 +43,6 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
         "diagonal_expansion": diagonal_expansion,
         "constraint_trim": constraint_trim,
         "target_regions": target_regions,
-        "degenerate": degenerate,
         "twoD_chemistry": twoD_chemistry,
         "alignment_file": alignment_file,
         "bwa_reference": bwa_reference,
@@ -74,7 +73,6 @@ class SignalAlignment(object):
                  threshold,
                  diagonal_expansion,
                  constraint_trim,
-                 degenerate,
                  forward_reference,
                  backward_reference=None,
                  # one of these needs to be set
@@ -106,7 +104,6 @@ class SignalAlignment(object):
         self.diagonal_expansion = diagonal_expansion  # alignment algorithm param
         self.constraint_trim = constraint_trim  # alignment algorithm param
         self.output_format = output_format  # smaller output files
-        self.degenerate = degenerate  # set of nucleotides for degenerate characters
         self.twoD_chemistry = twoD_chemistry  # flag for 2D sequencing runs
         self.temp_folder = FolderHandler()  # object for holding temporary files (non-toil)
         self.read_name = self.in_fast5.split("/")[-1][:-6]  # get the name without the '.fast5'
@@ -235,8 +232,6 @@ class SignalAlignment(object):
         # alignment info
         cigar_file_ = self.addTempFilePath("temp_cigar_%s.txt" % read_label)
         temp_samfile_ = self.addTempFilePath("temp_sam_file_%s.sam" % read_label)
-        strand = None
-        reference_name = None
         if not (self.check_for_temp_file_existance and os.path.isfile(cigar_file_)):
 
             # need guide alignment to generate cigar file
@@ -388,14 +383,6 @@ class SignalAlignment(object):
         if self.output_formats[self.output_format] == 3:
             out_fmt += "-i {} ".format(posteriors_file_path2)
 
-        # degenerate nucleotide information
-        if self.degenerate is not None:
-            if type(self.degenerate) is str:
-                self.degenerate = getDegenerateEnum(self.degenerate)
-            degenerate_flag = "-o {} ".format(self.degenerate)
-        else:
-            degenerate_flag = ""
-
         # twoD flag
         if self.twoD_chemistry:
             twoD_flag = "--twoD"
@@ -414,7 +401,7 @@ class SignalAlignment(object):
             self.complement_expectations_file_path = os.path.join(self.destination,
                                                              read_label + ".complement.expectations.tsv")
             command = \
-                "{vA} {td} {degen}{sparse}{model} -q {npRead} " \
+                "{vA} {td} {sparse}{model} -q {npRead} " \
                 "{t_model}{c_model}{thresh}{expansion}{trim} {hdp}-L {readLabel} -p {cigarFile} " \
                 "-t {templateExpectations} -c {complementExpectations} -n {seq_name} {f_ref_fa} {b_ref_fa} " \
                 "-g {traceback} {rna}" \
@@ -424,12 +411,12 @@ class SignalAlignment(object):
                             templateExpectations=self.template_expectations_file_path, hdp=hdp_flags,
                             complementExpectations=self.complement_expectations_file_path, t_model=template_model_flag,
                             c_model=complement_model_flag, thresh=threshold_flag, expansion=diag_expansion_flag,
-                            trim=trim_flag, degen=degenerate_flag, sparse=out_fmt, seq_name=reference_name,
+                            trim=trim_flag, sparse=out_fmt, seq_name=reference_name,
                             f_ref_fa=forward_ref_flag, b_ref_fa=backward_ref_flag, traceback=self.traceBackDiagonals,
                             rna=rna_flag)
         else:
             command = \
-                "{vA} {td} {degen}{sparse}{model} -q {npRead} " \
+                "{vA} {td} {sparse}{model} -q {npRead} " \
                 "{t_model}{c_model}{thresh}{expansion}{trim} -p {cigarFile} " \
                 "-u {posteriors} {hdp}-L {readLabel} -n {seq_name} {f_ref_fa} {b_ref_fa} -g {traceback} {rna}" \
                     .format(vA=self.path_to_signalMachine, model=stateMachineType_flag, sparse=out_fmt,
@@ -437,7 +424,7 @@ class SignalAlignment(object):
                             readLabel=read_label, npRead=npRead_, td=twoD_flag,
                             t_model=template_model_flag, c_model=complement_model_flag,
                             posteriors=posteriors_file_path, thresh=threshold_flag, expansion=diag_expansion_flag,
-                            trim=trim_flag, hdp=hdp_flags, degen=degenerate_flag, seq_name=reference_name,
+                            trim=trim_flag, hdp=hdp_flags, seq_name=reference_name,
                             f_ref_fa=forward_ref_flag, b_ref_fa=backward_ref_flag, traceback=self.traceBackDiagonals,
                             rna=rna_flag)
 
@@ -757,7 +744,7 @@ def multithread_signal_alignment(signal_align_arguments, fast5_locations, worker
     # ensure required arguments are in signal_align_argments
     required_arguments = {'destination', 'stateMachineType', 'in_templateHmm', 'in_complementHmm',
                           'in_templateHdp', 'in_complementHdp', 'threshold', 'diagonal_expansion', 'constraint_trim',
-                          'degenerate', 'forward_reference'}
+                          'forward_reference'}
     optional_arguments = {'backward_reference', 'alignment_file', 'bwa_reference', 'twoD_chemistry',
                           'target_regions', 'output_format', 'embed', 'event_table', 'check_for_temp_file_existance',
                           'track_memory_usage', 'get_expectations', 'path_to_bin', 'perform_kmer_event_alignment',
@@ -829,8 +816,7 @@ def multithread_signal_alignment(signal_align_arguments, fast5_locations, worker
 def create_sa_sample_args(fofns=[], fast5_dirs=[], positions_file=None, motifs=None, alignment_file=None,
                           bwa_reference=None, fw_reference=None, bw_reference=None, name=None,
                           number_of_kmer_assignments=10, probability_threshold=0.8, kmers_from_reference=False,
-                          quality_threshold=7, recursive=False, workers=4, assignments_dir=None, readdb=None,
-                          degenerate="variant"):
+                          quality_threshold=7, recursive=False, workers=4, assignments_dir=None, readdb=None):
     """Create sample arguments for SignalAlignSample. Parameters are explained in SignalAlignmentSample"""
     sample_args = {
         "fofns": fofns,
@@ -849,8 +835,7 @@ def create_sa_sample_args(fofns=[], fast5_dirs=[], positions_file=None, motifs=N
         'recursive': recursive,
         'workers': workers,
         "assignments_dir": assignments_dir,
-        "readdb": readdb,
-        "degenerate": degenerate
+        "readdb": readdb
     }
     return sample_args
 
@@ -858,8 +843,7 @@ def create_sa_sample_args(fofns=[], fast5_dirs=[], positions_file=None, motifs=N
 class SignalAlignSample(object):
     def __init__(self, working_folder, fofns, fast5_dirs, positions_file, motifs, bwa_reference, fw_reference,
                  bw_reference, name, number_of_kmer_assignments, probability_threshold, kmers_from_reference,
-                 alignment_file, readdb=None, quality_threshold=0, recursive=False, workers=4, assignments_dir=None,
-                 degenerate="variant"):
+                 alignment_file, readdb=None, quality_threshold=0, recursive=False, workers=4, assignments_dir=None):
         """Prepare sample for processing via signalAlign.
 
         :param working_folder: FolderHandler() object with a working directory already created
@@ -904,9 +888,6 @@ class SignalAlignSample(object):
         self.recursive = recursive
         self.workers = workers
         self.assignments_dir = assignments_dir
-        if degenerate is None:
-            degenerate = "variant"
-        self.degenerate = getDegenerateEnum(degenerate)
 
         assert self.name is not None, "Must specify a name for your sample. name: {}".format(self.name)
         assert isinstance(self.fast5_dirs, list), "fast5_dirs needs to be a list. fast5_dirs: {}".format(
@@ -1000,7 +981,6 @@ def multithread_signal_alignment_samples(samples, signal_align_arguments, worker
         # correct signal align arguments
         print("[multithread_signal_alignment_samples] Running SignalAlign on sample: {}".format(sample.name))
         sample.process_reads(trim=trim)
-        signal_align_arguments["degenerate"] = sample.degenerate
         signal_align_arguments["alignment_file"] = sample.alignment_file
         signal_align_arguments["bwa_reference"] = sample.bwa_reference
         signal_align_arguments["backward_reference"] = sample.bw_fasta_path
