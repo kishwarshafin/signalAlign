@@ -56,7 +56,7 @@ all : lib/libhdf5.a htslib/libhts.a sL bD ${libPath}/signalAlignLib.a ${signalAl
 	  ${signalAlignBin}/signalMachine ${signalAlignBin}/runSignalAlign \
 	  ${signalAlignBin}/variantCallingLib.py ${signalAlignBin}/alignmentAnalysisLib.py \
 	  ${signalAlignBin}/buildHdpUtil ${signalAlignBin}/trainModels all_tests \
-	  externals python_install ${signalAlignBin}/filterReads ${signalAlignBin}/extract \
+	  externals python_install ${signalAlignBin}/filterReads \
 	  ${signalAlignBin}/sequencing_summary ${signalAlignBin}/plot_kmer_distributions \
 	  ${signalAlignBin}/plot_variant_accuracy ${signalAlignBin}/compare_trained_models \
 	  ${signalAlignBin}/remove_sa_analyses ${signalAlignBin}/plot_labelled_read
