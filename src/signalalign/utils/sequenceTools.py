@@ -518,7 +518,7 @@ def count_kmers(dna, k):
 
 
 def parse_full_alignment_file(alignment_file):
-    data = pd.read_table(alignment_file, usecols=(1, 4, 5, 9, 12, 13),
+    data = pd.read_csv(alignment_file, usecols=(1, 4, 5, 9, 12, 13), sep="\t",
                          dtype={'ref_pos': np.int64,
                                 'strand': np.str,
                                 'event_index': np.int64,
@@ -548,7 +548,7 @@ class CustomAmbiguityPositions(object):
 
         :param ambig_filepath: path to ambiguity position file
         """
-        return pd.read_table(ambig_filepath,
+        return pd.read_csv(ambig_filepath, sep="\t",
                              usecols=(0, 1, 2, 3, 4),
                              names=["contig", "position", "strand", "change_from", "change_to"],
                              dtype={"contig": np.str,

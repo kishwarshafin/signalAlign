@@ -343,7 +343,7 @@ class SignalAlignmentTest(unittest.TestCase):
 
     def test_multithread_signal_alignment_samples(self):
         with tempfile.TemporaryDirectory() as tempdir:
-            tempdir = "/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/1testing"
+            # tempdir = "/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/1testing"
             working_folder = FolderHandler()
             test_fast5 = os.path.join(tempdir, "miten_PC_20160820_FNFAD20259_MN17223_mux_scan_AMS_158_R9_WGA_Ecoli_08_20_16_83098_ch138_read23_strand.fast5")
             num_files = 1
