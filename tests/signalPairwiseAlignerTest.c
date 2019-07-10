@@ -46,8 +46,6 @@ Sequence *makeTestKmerSequence() {
     char *s = "ATGXAXA"; // has 2 6mers
     int64_t lX = sequence_correctSeqLength(strlen(s), kmer, KMER_LENGTH);
     Sequence *seq = sequence_construct(lX, s, sequence_getKmer, kmer);
-    seq->degenerateBases = "CEO";
-    seq->nbDegenerateBases = 3;
     return seq;
 }
 
@@ -55,7 +53,7 @@ Sequence *makeKmerSequence(char *nucleotides) {
     int64_t lX = sequence_correctSeqLength(strlen(nucleotides), kmer, KMER_LENGTH);
     Sequence *seq = sequence_constructKmerSequence(lX, nucleotides,
                                                    sequence_getKmer, sequence_sliceNucleotideSequence,
-                                                   THREE_CYTOSINES, NB_CYTOSINE_OPTIONS, kmer);
+                                                   kmer);
     return seq;
 }
 
@@ -140,18 +138,12 @@ static void test_genericSequenceTests(CuTest *testCase, Sequence *testSequence, 
     }
 }
 
-static void test_referenceSequenceTests(CuTest *testCase, Sequence *testSequence) {
-    CuAssertStrEquals(testCase, testSequence->degenerateBases, THREE_CYTOSINES);
-    CuAssertIntEquals(testCase, testSequence->nbDegenerateBases, NB_CYTOSINE_OPTIONS);
-}
 
 static void test_Sequence(CuTest *testCase) {
     int64_t length = 1000;
     char *tS = getRandomSequence(length);
     Sequence* testSequence = sequence_construct(length, tS, sequence_getKmer, nucleotide);
     test_genericSequenceTests(testCase, testSequence, length, tS);
-    CuAssertPtrEquals(testCase, testSequence->degenerateBases, NULL);
-    CuAssertIntEquals(testCase, testSequence->nbDegenerateBases, 0);
     testSequence = sequence_construct2(length, tS, sequence_getKmer, sequence_sliceNucleotideSequence,
                                        nucleotide);
     sequence_destruct(testSequence);
@@ -164,15 +156,14 @@ static void test_referenceSequence(CuTest *testCase) {
     // test construct Kmer sequence
     Sequence *testSequence = sequence_constructKmerSequence(length, tS, sequence_getKmer,
                                                             sequence_sliceNucleotideSequence,
-                                                            THREE_CYTOSINES, NB_CYTOSINE_OPTIONS,
                                                             kmer);
     test_genericSequenceTests(testCase, testSequence, length, tS);
-    test_referenceSequenceTests(testCase, testSequence);
+//    test_referenceSequenceTests(testCase, testSequence);
 
     // test copy
     Sequence *copy = sequence_deepCopyNucleotideSequence(testSequence);
     test_genericSequenceTests(testCase, copy, length, tS);
-    test_referenceSequenceTests(testCase, copy);
+//    test_referenceSequenceTests(testCase, copy);
     CuAssertStrEquals(testCase, testSequence->elements, copy->elements);
     free(copy);
 
@@ -180,7 +171,6 @@ static void test_referenceSequence(CuTest *testCase) {
     int64_t r = st_randomInt(0, length);
     Sequence *slice = testSequence->sliceFcn(testSequence, 10, length - r);
     CuAssertStrEquals(testCase, ((char *)testSequence->elements + 10), slice->elements);
-    CuAssertStrEquals(testCase, testSequence->degenerateBases, slice->degenerateBases);
     CuAssert(testCase, "slice sequence type fail",testSequence->type == slice->type);
 
     sequence_deepDestruct(testSequence);

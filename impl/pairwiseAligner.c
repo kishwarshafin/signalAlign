@@ -368,8 +368,6 @@ Sequence *sequence_construct(int64_t length, void *elements, void *(*getFcn)(voi
     self->length = length;
     self->elements = elements;
     self->get = getFcn;
-    self->degenerateBases = NULL;
-    self->nbDegenerateBases = 0;
     self->ambigBases = create_ambig_bases();
     return self;
 }
@@ -392,8 +390,6 @@ Sequence *sequence_sliceNucleotideSequence(Sequence *inputSequence, int64_t star
     Sequence *newSequence = sequence_constructKmerSequence(sliceLength, elementSlice,
                                                            inputSequence->get,
                                                            inputSequence->sliceFcn,
-                                                           inputSequence->degenerateBases,
-                                                           inputSequence->nbDegenerateBases,
                                                            inputSequence->type);
     return newSequence;
 }
@@ -409,26 +405,20 @@ Sequence *sequence_sliceEventSequence(Sequence *inputSequence, int64_t start, in
 Sequence *sequence_constructKmerSequence(int64_t length, void *elements,
                                          void *(*getFcn)(void *, int64_t),
                                          Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                         char *nucleotideOptions, int64_t nbOptions, SequenceType type) {
+                                         SequenceType type) {
     if (type != kmer) {
         st_errAbort("sequence_constructKmerSequence: can only make reference sequence from kmer sequence\n");
     }
     Sequence *self = sequence_construct2(length, elements, getFcn, sliceFcn, type);
-    char *degenerateBases = (char *)st_malloc(sizeof(char) * (nbOptions + 1));
-    memcpy(degenerateBases, nucleotideOptions, sizeof(char) * (nbOptions + 1));
     self->sliceFcn = sliceFcn;
-    self->degenerateBases = degenerateBases;
-    self->nbDegenerateBases = nbOptions;
     return self;
 }
 
 Sequence *sequence_constructReferenceKmerSequence(int64_t length, void *elements,
                                                   void *(*getFcn)(void *, int64_t),
                                                   Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                                  DegenerateType dType, SequenceType type) {
+                                                  SequenceType type) {
     Sequence *self = sequence_constructKmerSequence(length, elements, getFcn, sliceFcn,
-                                                    sequence_getBaseOptions(dType),
-                                                    sequence_nbBaseOptions(dType),
                                                     type);
     return self;
 }
@@ -436,11 +426,9 @@ Sequence *sequence_constructReferenceKmerSequence(int64_t length, void *elements
 Sequence *sequence_constructReferenceKmerSequence2(int64_t length, void *elements,
                                                   void *(*getFcn)(void *, int64_t),
                                                   Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                                  DegenerateType dType, SequenceType type) {
+                                                  SequenceType type) {
 
     Sequence *self = sequence_constructKmerSequence(length, elements, getFcn, sliceFcn,
-                                                    sequence_getBaseOptions(dType),
-                                                    sequence_nbBaseOptions(dType),
                                                     type);
     return self;
 }
@@ -448,10 +436,8 @@ Sequence *sequence_constructReferenceKmerSequence2(int64_t length, void *element
 
 Sequence *sequence_deepCopyNucleotideSequence(const Sequence *toCopy) {
     char *elementsCopy = stString_copy(toCopy->elements);
-    char *degenerateBasesCopy = stString_copy(toCopy->degenerateBases);
     Sequence *copy = sequence_constructKmerSequence(toCopy->length, elementsCopy,
                                                     toCopy->get, toCopy->sliceFcn,
-                                                    degenerateBasesCopy, toCopy->nbDegenerateBases,
                                                     toCopy->type);
     return copy;
 }
@@ -978,15 +964,15 @@ DpDiagonal *dpDiagonal_construct(Diagonal diagonal, int64_t stateNumber, int64_t
     if (nucleotideSequence->type != kmer) {  // todo will need to change this for nuc/nuc alignments
         st_errAbort("dpDiagonal_construct: got illegal sequence type %i", nucleotideSequence->type);
     }
-    if (nucleotideSequence->degenerateBases == NULL) {
-        st_errAbort("dpDiagonal_construct: got NULL nucleotide option array got %s nbBaseOptions %lld type %lld\n",
-                    nucleotideSequence->degenerateBases, nucleotideSequence->nbDegenerateBases,
-                    nucleotideSequence->type);
-    }
-    if (nucleotideSequence->nbDegenerateBases < 1) {
-        st_errAbort("dpDiagonal_construct: got less than 1 cytosine option, got %lld\n",
-                    nucleotideSequence->nbDegenerateBases);
-    }
+//    if (nucleotideSequence->degenerateBases == NULL) {
+//        st_errAbort("dpDiagonal_construct: got NULL nucleotide option array got %s nbBaseOptions %lld type %lld\n",
+//                    nucleotideSequence->degenerateBases, nucleotideSequence->nbDegenerateBases,
+//                    nucleotideSequence->type);
+//    }
+//    if (nucleotideSequence->nbDegenerateBases < 1) {
+//        st_errAbort("dpDiagonal_construct: got less than 1 cytosine option, got %lld\n",
+//                    nucleotideSequence->nbDegenerateBases);
+//    }
 
     DpDiagonal *dpDiagonal = st_malloc(sizeof(DpDiagonal));
     dpDiagonal->diagonal = diagonal;
@@ -2099,7 +2085,7 @@ stList *getAlignedPairsWithoutBanding(StateMachine *sM, void *cX, void *cY, int6
                                       bool alignmentHasRaggedLeftEnd, bool alignmentHasRaggedRightEnd) {
     // make sequence objects
     //Sequence *ScX = sequence_construct(lX, cX, getXFcn, kmer);
-    Sequence *ScX = sequence_constructKmerSequence(lX, cX, getXFcn, NULL, THREE_CYTOSINES, NB_CYTOSINE_OPTIONS, kmer);
+    Sequence *ScX = sequence_constructKmerSequence(lX, cX, getXFcn, NULL, kmer);
     if (sM->type == echelon) {
         sequence_padSequence(ScX);
     }

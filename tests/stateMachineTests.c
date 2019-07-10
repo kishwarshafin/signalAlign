@@ -16,7 +16,7 @@ Sequence *getZymoReferenceSequence(int64_t kmerLength) {
     int64_t lX = sequence_correctSeqLength(strlen(ZymoReferenceSeq), event, kmerLength);
     Sequence *refSeq = sequence_constructKmerSequence(lX, ZymoReferenceSeq,
                                                       sequence_getKmer, sequence_sliceNucleotideSequence,
-                                                      "CEO", 3, kmer);
+                                                      kmer);
     free(ZymoReferenceFilePath);
     return refSeq;
 }
@@ -28,7 +28,7 @@ Sequence *getEcoliReferenceSequence(int64_t kmerLength) {
     int64_t lX = sequence_correctSeqLength(strlen(referenceSeq), event, kmerLength);
     Sequence *refSeq = sequence_constructKmerSequence(lX, referenceSeq,
                                                       sequence_getKmer, sequence_sliceNucleotideSequence,
-                                                      "CEO", 3, kmer);
+                                                      kmer);
     free(ecoliReferencePath);
     return refSeq;
 }
@@ -464,8 +464,7 @@ static void test_sm3_diagonalDPCalculations(CuTest *testCase) {
 
     // make Sequence objects
     //Sequence *SsX = makeKmerSequence(sX);
-    Sequence *SsX = sequence_constructKmerSequence(lX, sX, sequence_getKmer, sequence_sliceNucleotideSequence,
-                                                   THREE_CYTOSINES, NB_CYTOSINE_OPTIONS, kmer);
+    Sequence *SsX = sequence_constructKmerSequence(lX, sX, sequence_getKmer, sequence_sliceNucleotideSequence, kmer);
     Sequence *SsY = sequence_construct(lY, sY, sequence_getEvent, event);
 
     DpMatrix *dpMatrixForward = dpMatrix_construct(lX + lY, sM->stateNumber, sM->kmerLength);
@@ -594,8 +593,7 @@ static void test_sm3_5merDiagonalDPCalculations(CuTest *testCase) {
 
     // make Sequence objects
     //Sequence *SsX = makeKmerSequence(sX);
-    Sequence *SsX = sequence_constructKmerSequence(lX, sX, sequence_getKmer, sequence_sliceNucleotideSequence,
-                                                   THREE_CYTOSINES, NB_CYTOSINE_OPTIONS, kmer);
+    Sequence *SsX = sequence_constructKmerSequence(lX, sX, sequence_getKmer, sequence_sliceNucleotideSequence, kmer);
     Sequence *SsY = sequence_construct(lY, sY, sequence_getEvent, event);
 
     DpMatrix *dpMatrixForward = dpMatrix_construct(lX + lY, sM->stateNumber, sM->kmerLength);

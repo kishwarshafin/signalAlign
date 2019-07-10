@@ -399,7 +399,7 @@ stList *performSignalAlignment(StateMachine *sM, Sequence *eventSequence, int64_
 
     // make sequences
     Sequence *sX = sequence_constructReferenceKmerSequence(lX, target, sequence_getKmer,
-                                                           sequence_sliceNucleotideSequence, degenerate, kmer);
+                                                           sequence_sliceNucleotideSequence, kmer);
 
     // do alignment
     stList *alignedPairs = getAlignedPairsUsingAnchors(sM, sX, eventSequence, filteredRemappedAnchors, p,
@@ -436,10 +436,6 @@ void getSignalExpectations(StateMachine *sM, Hmm *hmmExpectations, Sequence *eve
 
     Sequence *target = sequence_constructKmerSequence(
             lX, trainingTarget, sequence_getKmer, sequence_sliceNucleotideSequence,
-            (degenerate == canonicalVariants ? CANONICAL_NUCLEOTIDES :
-             (degenerate == cytosineMethylation2 ? TWO_CYTOSINES : THREE_CYTOSINES)),
-            (degenerate == canonicalVariants ? NB_CANONICAL_BASES :
-             (degenerate == cytosineMethylation2 ? (NB_CYTOSINE_OPTIONS - 1) : NB_CYTOSINE_OPTIONS)),
             kmer);
 
     getExpectationsUsingAnchors(sM, hmmExpectations, target, eventSequence, filteredRemappedAnchors, p,

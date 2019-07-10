@@ -64,8 +64,6 @@ struct _sequence {
     int64_t length;
     SequenceType type;
     void *elements;
-    char *degenerateBases;
-    int64_t nbDegenerateBases;
     stHash* ambigBases;
     void *(*get)(void *elements, int64_t index);
     Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t);
@@ -92,16 +90,15 @@ Sequence *sequence_construct2(int64_t length, void *elements, void *(*getFcn)(vo
 
 Sequence *sequence_constructReferenceKmerSequence(int64_t length, void *elements, void *(*getFcn)(void *, int64_t),
                                                   Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                                  DegenerateType dType, SequenceType type);
+                                                  SequenceType type);
 
 Sequence *sequence_constructKmerSequence(int64_t length, void *elements, void *(*getFcn)(void *, int64_t),
-                                         Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                         char *nucleotideOptions, int64_t nbOptions, SequenceType type);
+                                         Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t), SequenceType type);
 
 Sequence *sequence_constructReferenceKmerSequence2(int64_t length, void *elements,
                                                    void *(*getFcn)(void *, int64_t),
                                                    Sequence *(*sliceFcn)(Sequence *, int64_t, int64_t),
-                                                   DegenerateType dType, SequenceType type);
+                                                   SequenceType type);
 
 Sequence *sequence_deepCopyNucleotideSequence(const Sequence *toCopy);
 
