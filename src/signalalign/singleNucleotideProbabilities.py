@@ -822,8 +822,9 @@ def main(args):
     degenerate_type = getDegenerateEnum("variant")
     # get the sites that have proposed edits
     print("\n\n[singleNucleotideProbabilities] scanning for proposals with %d fast5s" % len(fast5s))
-    output_files = discover_single_nucleotide_probabilities(args, temp_folder, args.kmer_size, args.ref, fast5s, alignment_args, degenerate_type,
-                                                            args.nb_jobs, args.step_size, output_directory=args.out)
+    output_files = discover_single_nucleotide_probabilities(args, temp_folder, args.kmer_size, args.ref, fast5s, alignment_args,
+                                                            args.nb_jobs, args.step_size, degenerate_type,
+                                                            output_directory=args.out)
     print("\n[singleNucleotideProbabilities] got {} output files:".format(len(output_files)))
     i = 0
     for output_file in output_files:
