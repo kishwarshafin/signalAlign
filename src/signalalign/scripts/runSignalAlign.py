@@ -173,6 +173,7 @@ def main(args):
             constraint_trim=config_args.constraint_trim,
             traceBackDiagonals=config_args.traceBackDiagonals,
             twoD_chemistry=config_args.two_d,
+            perform_kmer_event_alignment=config_args.perform_kmer_event_alignment,
             get_expectations=False,
             path_to_bin=resolvePath(config_args.path_to_bin),
             check_for_temp_file_existance=True,
