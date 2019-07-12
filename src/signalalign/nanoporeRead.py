@@ -204,27 +204,27 @@ class NanoporeRead(object):
 
         print("[NanoporeRead._initialize] oned_root_address {}".format(oned_root_address))
         # get basecall version
-        if not any(x in self.fastFive[oned_root_address].attrs.keys() for x in VERSION_KEY):
-            self.logError("[NanoporeRead:_initialize] ERROR %s missing version" % self.filename)
-            self.close()
-            return False
-        if "version" in self.fastFive[oned_root_address].attrs.keys():
-            self.version = self.bytes_to_string(self.fastFive[oned_root_address].attrs["version"])
-        elif "dragonet version" in self.fastFive[oned_root_address].attrs.keys():
-            self.version = self.bytes_to_string(self.fastFive[oned_root_address].attrs["dragonet version"])
-        elif "nanotensor version" in self.fastFive[oned_root_address].attrs.keys():
-            self.version = self.fastFive[oned_root_address].attrs["nanotensor version"]
-        else:
-            self.version = self.fastFive[oned_root_address].attrs["signalAlign version"]
+        # if not any(x in self.fastFive[oned_root_address].attrs.keys() for x in VERSION_KEY):
+        #     self.logError("[NanoporeRead:_initialize] ERROR %s missing version" % self.filename)
+        #     self.close()
+        #     return False
+        # if "version" in self.fastFive[oned_root_address].attrs.keys():
+        #     self.version = self.bytes_to_string(self.fastFive[oned_root_address].attrs["version"])
+        # elif "dragonet version" in self.fastFive[oned_root_address].attrs.keys():
+        #     self.version = self.bytes_to_string(self.fastFive[oned_root_address].attrs["dragonet version"])
+        # elif "nanotensor version" in self.fastFive[oned_root_address].attrs.keys():
+        #     self.version = self.fastFive[oned_root_address].attrs["nanotensor version"]
+        # else:
+        #     self.version = self.fastFive[oned_root_address].attrs["signalAlign version"]
 
-        if self.version not in SUPPORTED_1D_VERSIONS:
-            self.logError("[NanoporeRead:_initialize] ERROR %s unsupported version %s " % (self.filename, self.version))
-            if self.enforce_supported_versions:
-                self.close()
-                return False
-            else:
-                self.logError(
-                    "[NanoporeRead:_initialize] unexpected behavior may be due to unexpected nanopore read version")
+        # if self.version not in SUPPORTED_1D_VERSIONS:
+        #     self.logError("[NanoporeRead:_initialize] ERROR %s unsupported version %s " % (self.filename, self.version))
+        #     if self.enforce_supported_versions:
+        #         self.close()
+        #         return False
+        #     else:
+        #         self.logError(
+        #             "[NanoporeRead:_initialize] unexpected behavior may be due to unexpected nanopore read version")
 
         self.template_event_table_address = os.path.join(oned_root_address, "BaseCalled_template/Events")
         self.template_model_address = os.path.join(oned_root_address, "BaseCalled_template/Model")
