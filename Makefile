@@ -56,7 +56,7 @@ all : lib/libhdf5.a htslib/libhts.a sL bD ${libPath}/signalAlignLib.a ${signalAl
 	  ${signalAlignBin}/signalMachine ${signalAlignBin}/runSignalAlign \
 	  ${signalAlignBin}/variantCallingLib.py ${signalAlignBin}/alignmentAnalysisLib.py \
 	  ${signalAlignBin}/buildHdpUtil ${signalAlignBin}/trainModels all_tests \
-	  externals python_install ${signalAlignBin}/filterReads \
+	  externals ${signalAlignBin}/filterReads \
 	  ${signalAlignBin}/sequencing_summary ${signalAlignBin}/plot_kmer_distributions \
 	  ${signalAlignBin}/plot_variant_accuracy ${signalAlignBin}/compare_trained_models \
 	  ${signalAlignBin}/remove_sa_analyses ${signalAlignBin}/plot_labelled_read
@@ -120,9 +120,9 @@ python_install :
 	which python3
 	python3 setup.py install
 
-
-pip_install : .FORCE
-	pip3 install -e .
+pip_install :
+	which python3
+	pip3 install -e . --user
 
 signalAlignLib : ${libPath}/signalAlignLib.a
 
@@ -233,4 +233,4 @@ ${libPath}/signalAlignLib.a : ${libSources} ${libHeaders} ${stBarDependencies}
 	cp ${libHeaders} ${libPath}/
 
 
-.FORCE: python_develop
+.FORCE:

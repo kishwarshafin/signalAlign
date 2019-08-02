@@ -121,8 +121,8 @@ target_link_libraries(eventAlignerTests ${SA_LIBRARY})
 add_executable(signalAlignLibTests ${SOURCE_FILES} ${SIGNALMACHINE_TEST})
 target_link_libraries(signalAlignLibTests  ${SA_LIBRARY})
 
-add_executable(extract ${SOURCE_FILES} ${EXTRACT})
-target_link_libraries(extract ${SA_LIBRARY})
+#add_executable(extract ${SOURCE_FILES} ${EXTRACT})
+#target_link_libraries(extract ${SA_LIBRARY})
 
 #/usr/local/bin/gcc  -I/usr/local/include -I/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/inc -I/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/sonLib/lib -I/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/sonLib/externalTools/cutest -I/Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/sonLib/externalTools/quicktree_1.1/include -I/System/Library/Frameworks/Python.framework/Headers  -g -O3 -g -Wall --pedantic -fopenmp -funroll-loops -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk   -o CMakeFiles/signalMachine.dir/impl/hdp_math_utils.c.o   -c /Users/andrewbailey/CLionProjects/nanopore-RNN/submodules/signalAlign/impl/hdp_math_utils.c
 #gcc-5 -O3 -g -Wall --pedantic -fopenmp -funroll-loops -DNDEBUG   -I./include -I./htslib -fPIC -Iinc/ -I././sonLib/lib/  -c impl/*.c ./htslib/libhts.a ./lib/libhdf5.a -lz -llzma -lbz2 -lcurl -lpthread -lcrypto -ldl

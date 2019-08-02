@@ -31,7 +31,7 @@ SUPPORTED_2D_VERSIONS = ("1.15.0", "1.19.0", "1.20.0", "1.22.2", "1.22.4", "1.23
 class NanoporeRead(object):
     def __init__(self, fast_five_file, twoD=False, event_table='', initialize=False, path_to_bin="./",
                  alignment_file=None, model_file_location=None, perform_kmer_event_alignment=None,
-                 enforce_supported_versions=True, filter_reads=False, aligned_segment=None):
+                 enforce_supported_versions=True, filter_reads=False, aligned_segment=None, rna=None):
         # load the fast5
         self.filename = fast_five_file  # fast5 file path
         self.fastFive = None  # fast5 object
@@ -87,10 +87,10 @@ class NanoporeRead(object):
 
         # determination of RNA read
         self.rna = False
-        if self.is_read_rna():
+        if self.is_read_rna() or rna:
             self.rna = True
             assert self.twoD is False, "Cannot perform 2D analysis when using RNA data"
-
+        print("[NanoporeRead:open] is this an rna read?: ", self.rna)
         # initialize if appropriate
         if initialize:
             self.Initialize()
@@ -269,7 +269,9 @@ class NanoporeRead(object):
                 get_full_nucleotide_read_from_alignment(self.alignment_file, self.read_label)
 
         oned_root_address = load_from_raw2(self, self.aligned_segment, self.model_file_location, self.path_to_bin,
-                                           analysis_identifier=self.event_table if self.event_table else None)
+                                           analysis_identifier=self.event_table if self.event_table else None,
+                                           write_failed_alignments=True,
+                                           rna=self.rna)
         if oned_root_address:
             self.logError(
                 "[NanoporeRead:generate_new_event_table] INFO generated event table at {}".format(oned_root_address))

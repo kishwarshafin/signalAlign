@@ -28,7 +28,7 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
                                 event_table=False,
                                 check_for_temp_file_existance=True,
                                 path_to_bin='./', perform_kmer_event_alignment=None, filter_reads=False,
-                                traceBackDiagonals=100, delete_tmp=True):
+                                traceBackDiagonals=100, delete_tmp=True, rna=False):
     """Create alignment arguments for SignalAlign. Parameters are explained in SignalAlignment"""
     alignment_args = {
         "backward_reference": backward_reference,
@@ -56,7 +56,8 @@ def create_signalAlignment_args(backward_reference=None, forward_reference=None,
         'perform_kmer_event_alignment': perform_kmer_event_alignment,
         'filter_reads': filter_reads,
         'traceBackDiagonals': traceBackDiagonals,
-        'delete_tmp': delete_tmp}
+        'delete_tmp': delete_tmp,
+        'rna': rna}
 
     return alignment_args
 
@@ -95,7 +96,8 @@ class SignalAlignment(object):
                  filter_reads=False,
                  traceBackDiagonals=100,
                  cigar_string=None,
-                 delete_tmp=True):
+                 delete_tmp=True,
+                 rna=False):
         self.in_fast5 = in_fast5  # fast5 file to align
         self.destination = destination  # place where the alignments go, should already exist
         self.stateMachineType = stateMachineType  # flag for signalMachine
@@ -126,7 +128,7 @@ class SignalAlignment(object):
         self.filter_reads = filter_reads  # filter reads out with average fastq quality scores less than 7
         self.traceBackDiagonals = traceBackDiagonals  # number of traceback diagonals to caluclate before calculating
         self.delete_tmp = delete_tmp
-
+        self.rna = rna
         self.complement_expectations_file_path = None
         self.template_expectations_file_path = None
 
@@ -187,7 +189,7 @@ class SignalAlignment(object):
                                   model_file_location=self.in_templateHmm,
                                   enforce_supported_versions=self.enforce_supported_versions,
                                   perform_kmer_event_alignment=self.perform_kmer_event_alignment,
-                                  filter_reads=self.filter_reads, aligned_segment=self.aligned_segment)
+                                  filter_reads=self.filter_reads, aligned_segment=self.aligned_segment, rna=self.rna)
         # sanity check
         if not npRead.initialize_success:
             self.failStop("[SignalAlignment.run] ERROR: NanoporeRead failed initialization: {}".format(self.in_fast5),
@@ -453,7 +455,7 @@ class SignalAlignment(object):
                     self.max_memory_usage_kb = int(line.split(":")[1])
 
             if passed == -1:
-                self.failStop("[SignalAlignment.run] ERROR exception running signalAlign")
+                self.failStop("[SignalAlignment.run] ERROR exception running signalMachine")
                 return False
 
         except Exception as e:
@@ -748,7 +750,7 @@ def multithread_signal_alignment(signal_align_arguments, fast5_locations, worker
     optional_arguments = {'backward_reference', 'alignment_file', 'bwa_reference', 'twoD_chemistry',
                           'target_regions', 'output_format', 'embed', 'event_table', 'check_for_temp_file_existance',
                           'track_memory_usage', 'get_expectations', 'path_to_bin', 'perform_kmer_event_alignment',
-                          'enforce_supported_versions', 'filter_reads', 'traceBackDiagonals', 'delete_tmp'}
+                          'enforce_supported_versions', 'filter_reads', 'traceBackDiagonals', 'delete_tmp', 'rna'}
     missing_arguments = list(filter(lambda x: x not in signal_align_arguments.keys(), required_arguments))
     unexpected_arguments = list(filter(lambda x: x not in required_arguments and x not in optional_arguments,
                                        signal_align_arguments.keys()))

@@ -183,7 +183,8 @@ def main(args):
             event_table=config_args.signal_alignment_args.event_table,
             output_format=config_args.signal_alignment_args.output_format,
             filter_reads=config_args.filter_reads,
-            delete_tmp=config_args.signal_alignment_args.delete_tmp)
+            delete_tmp=config_args.signal_alignment_args.delete_tmp,
+            rna=config_args.rna)
 
         multithread_signal_alignment_samples(samples, alignment_args, config_args.job_count, trim=None,
                                              debug=config_args.debug)

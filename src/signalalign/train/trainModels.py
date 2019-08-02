@@ -1050,7 +1050,8 @@ class TrainSignalAlign(object):
             event_table=self.args.signal_alignment_args.event_table,
             output_format=output_format,
             filter_reads=self.args.filter_reads,
-            delete_tmp=self.args.signal_alignment_args.delete_tmp)
+            delete_tmp=self.args.signal_alignment_args.delete_tmp,
+            rna=self.args.rna)
 
         dont_run_sa_samples = []
         run_sa_samples = []
