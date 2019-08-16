@@ -47,6 +47,12 @@ runSignalAlign run --config tests/runSignalAlign-config.json &> log_file.txt
 | E         | 5-Methylcytosine   |
 | O         | 5-Hydroxymethylcytosine   |
 | J         | Bromodeoxyuridine   |
+| p         | Pseudouridine   |
+| b         | 7-Methylguanosine   |
+| d         | 2-methylguanosine   |
+| e         | n4-methylcytidine   |
+| h         | 2'-O-methyluridine   |
+| i         | n6,n6-dimethyladenosine   |
 
 | Ambig Character | Other Characters |
 |:---------:|--------------------|
@@ -67,6 +73,12 @@ runSignalAlign run --config tests/runSignalAlign-config.json &> log_file.txt
 | f         |AF |
 | U         |ACEGOT |
 | Z         |JT |
+| j         |Tp |
+| k         |Gb |
+| l         |Gd |
+| m         |Ce |
+| n         |Th |
+| o         |Ai |
 
 
 ### extract

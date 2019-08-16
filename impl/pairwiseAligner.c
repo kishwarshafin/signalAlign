@@ -54,7 +54,12 @@ stHash *create_ambig_bases() {
   stHash_insert(ambig_hash, "f", "AF");
   stHash_insert(ambig_hash, "U", "ACEGOT");
   stHash_insert(ambig_hash, "Z", "JT");
-
+  stHash_insert(ambig_hash, "j", "Tp");
+  stHash_insert(ambig_hash, "k", "Gb");
+  stHash_insert(ambig_hash, "l", "Gd");
+  stHash_insert(ambig_hash, "m", "Ce");
+  stHash_insert(ambig_hash, "n", "Th");
+  stHash_insert(ambig_hash, "o", "Ai");
 
   return ambig_hash;
 }
