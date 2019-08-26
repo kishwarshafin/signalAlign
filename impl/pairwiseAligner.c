@@ -1361,9 +1361,8 @@ void diagonalCalculationPosteriorMatchProbs(StateMachine *sM, int64_t xay, DpMat
                     if (stString_eq(pathForward->kmer, pathBackwards->kmer)) {
                         double *forwardCells = path_getCell(pathForward);
                         double *backwardCells = path_getCell(pathBackwards);
-                        double posteriorProbability = exp(
-                                (forwardCells[sM->matchState] + backwardCells[sM->matchState]) - totalProbability);
-
+                        double posteriorProbability =
+                            exp((forwardCells[sM->matchState] + backwardCells[sM->matchState]) - totalProbability);
                         // DEBUGGING
 //                        int64_t ref_index = 3560627+x;
 //                        int64_t event_index = y+64;

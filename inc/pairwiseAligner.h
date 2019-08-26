@@ -40,7 +40,7 @@ extern const char *PAIRWISE_ALIGNMENT_EXCEPTION_ID;
 
 // TODO depreciate these things
 #define KMER_LENGTH 6
-#define NUM_OF_KMERS 46656
+#define NUM_OF_KMERS 262144
 
 // Sequence types
 typedef enum {
